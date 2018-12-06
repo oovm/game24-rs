@@ -1,15 +1,17 @@
+use game24::{Maybe32, AST};
+
 #[derive(Clone, Copy, Debug)]
 enum Operator {
-    Sub,
+    Minus,
     Plus,
-    Mul,
-    Div,
+    Times,
+    Divide,
 }
 
 #[derive(Clone, Debug)]
 struct Factor {
-    content: String,
-    value: i32,
+    pub ast: AST<Maybe32>,
+    pub value: Maybe32,
 }
 
 fn apply(op: Operator, left: &[Factor], right: &[Factor]) -> Vec<Factor> {
@@ -18,36 +20,31 @@ fn apply(op: Operator, left: &[Factor], right: &[Factor]) -> Vec<Factor> {
         for r in right.iter() {
             use Operator::*;
             ret.push(match op {
-                Sub if l.value > r.value => {
-                    Factor { content: format!("({} - {})", l.content, r.content), value: l.value - r.value }
-                }
-                Plus => Factor { content: format!("({} + {})", l.content, r.content), value: l.value + r.value },
-                Mul => Factor { content: format!("({} x {})", l.content, r.content), value: l.value * r.value },
-                Div if l.value >= r.value && r.value > 0 && l.value % r.value == 0 => {
-                    Factor { content: format!("({} / {})", l.content, r.content), value: l.value / r.value }
-                }
-                _ => continue,
+                Minus => Factor { ast: AST::new("-", &l.ast, &r.ast), value: l.value - r.value },
+                Plus => Factor { ast: AST::new("+", &l.ast, &r.ast), value: l.value + r.value },
+                Times => Factor { ast: AST::new("*", &l.ast, &r.ast), value: l.value * r.value },
+                Divide => Factor { ast: AST::new("/", &l.ast, &r.ast), value: l.value / r.value },
             })
         }
     }
     ret
 }
 
-fn calc(op: [Operator; 3], numbers: [i32; 4]) -> Vec<Factor> {
-    fn calc(op: &[Operator], numbers: &[i32], acc: &[Factor]) -> Vec<Factor> {
+fn calc(op: [Operator; 3], numbers: [Maybe32; 4]) -> Vec<Factor> {
+    fn calc(op: &[Operator], numbers: &[Maybe32], acc: &[Factor]) -> Vec<Factor> {
         use Operator::*;
         if op.is_empty() {
             return Vec::from(acc);
         }
         let mut ret = Vec::new();
-        let mono_factor = [Factor { content: numbers[0].to_string(), value: numbers[0] }];
+        let mono_factor = [Factor { ast: AST::Number(numbers[0]), value: numbers[0] }];
         match op[0] {
-            Mul => ret.extend_from_slice(&apply(op[0], acc, &mono_factor)),
-            Div => {
+            Times => ret.extend_from_slice(&apply(op[0], acc, &mono_factor)),
+            Divide => {
                 ret.extend_from_slice(&apply(op[0], acc, &mono_factor));
                 ret.extend_from_slice(&apply(op[0], &mono_factor, acc));
             }
-            Sub => {
+            Minus => {
                 ret.extend_from_slice(&apply(op[0], acc, &mono_factor));
                 ret.extend_from_slice(&apply(op[0], &mono_factor, acc));
             }
@@ -55,37 +52,33 @@ fn calc(op: [Operator; 3], numbers: [i32; 4]) -> Vec<Factor> {
         }
         calc(&op[1..], &numbers[1..], &ret)
     }
-    calc(&op, &numbers[1..], &[Factor { content: numbers[0].to_string(), value: numbers[0] }])
+    calc(&op, &numbers[1..], &[Factor { ast: AST::Number(numbers[0]), value: numbers[0] }])
 }
 
-fn solutions(numbers: [i32; 4]) -> Vec<Factor> {
+fn solutions(numbers: [Maybe32; 4], target: i32) -> Vec<Factor> {
     use std::collections::hash_set::HashSet;
     let mut ret = Vec::new();
-    let mut hash_set = HashSet::new();
-
     for ops in OpIter(0) {
         for o in orders().iter() {
             let numbers = apply_order(numbers, o);
             let r = calc(ops, numbers);
-            ret.extend(
-                r.into_iter().filter(|&Factor { value, ref content }| value == 24 && hash_set.insert(content.to_owned())),
-            )
+            ret.extend(r.into_iter().filter(|&Factor { value, ast: ref content }| value == 24))
         }
     }
     ret
 }
 
 fn main() {
-    let numbers = [1,2,3,4];
-    let solutions = solutions(numbers);
+    let numbers = [Maybe32::from(1), Maybe32::from(2), Maybe32::from(3), Maybe32::from(4)];
+    let solutions = solutions(numbers, 24);
     let len = solutions.len();
     if len == 0 {
-        println!("no solution for {}, {}, {}, {}", numbers[0], numbers[1], numbers[2], numbers[3]);
+        println!("no solution for {:?}, {:?}, {:?}, {:?}", numbers[0], numbers[1], numbers[2], numbers[3]);
         return;
     }
-    println!("solutions for {}, {}, {}, {}", numbers[0], numbers[1], numbers[2], numbers[3]);
+    println!("solutions for {:?}, {:?}, {:?}, {:?}", numbers[0], numbers[1], numbers[2], numbers[3]);
     for s in solutions {
-        println!("{}", s.content)
+        println!("{:?}", s.ast)
     }
     println!("{} solutions found", len);
     return;
@@ -97,7 +90,7 @@ impl Iterator for OpIter {
     type Item = [Operator; 3];
     fn next(&mut self) -> Option<[Operator; 3]> {
         use Operator::*;
-        const OPTIONS: [Operator; 4] = [Mul, Sub, Plus, Div];
+        const OPTIONS: [Operator; 4] = [Times, Minus, Plus, Divide];
         if self.0 >= 1 << 6 {
             return None;
         }
@@ -138,6 +131,6 @@ fn orders() -> [[usize; 4]; 24] {
     ]
 }
 
-fn apply_order(numbers: [i32; 4], order: &[usize; 4]) -> [i32; 4] {
+fn apply_order(numbers: [Maybe32; 4], order: &[usize; 4]) -> [Maybe32; 4] {
     [numbers[order[0]], numbers[order[1]], numbers[order[2]], numbers[order[3]]]
 }

@@ -1,10 +1,9 @@
 #[rustfmt::skip]
 pub mod tree4;
 
-use crate::trees::Maybe32::{Decimal, Integer, Nothing};
+use crate::Maybe32::{self, Decimal, Integer, Nothing};
 use std::ops::{Add, Div, Mul, Sub};
 pub use tree4::{V2O4, V3O4, V4O4};
-use crate::AST;
 
 pub trait Pow<Rhs = Self> {
     type Output;
@@ -14,25 +13,6 @@ pub trait Pow<Rhs = Self> {
 pub trait Surd<Rhs = Self> {
     type Output;
     fn surd(self, rhs: Rhs) -> Self::Output;
-}
-
-#[derive(Copy, Clone, Debug)]
-pub enum Maybe32 {
-    Nothing,
-    Integer(i32),
-    Decimal(f32),
-}
-
-impl<T: Add<Output = T> + Sub<Output = T> + Mul<Output = T> + Div<Output = T>> AST<T> {
-    pub fn eval(self) -> T {
-        match self {
-            AST::Number(n) => { n }
-            AST::Plus(a, b) => { a.eval() + b.eval() }
-            AST::Minus(a, b) =>{ a.eval() - b.eval() }
-            AST::Times(a, b) => { a.eval() * b.eval() }
-            AST::Divide(a, b) => { a.eval() / b.eval() }
-        }
-    }
 }
 
 impl From<i32> for Maybe32 {
@@ -106,7 +86,8 @@ impl Div<Maybe32> for Maybe32 {
             Integer(b) => {
                 if b == 0 {
                     Nothing
-                } else {
+                }
+                else {
                     match self {
                         Nothing => Nothing,
                         Integer(a) => Decimal(a as f32 / b as f32),
@@ -117,7 +98,8 @@ impl Div<Maybe32> for Maybe32 {
             Decimal(b) => {
                 if b == 0.0 {
                     Nothing
-                } else {
+                }
+                else {
                     match self {
                         Nothing => Nothing,
                         Integer(a) => Decimal(a as f32 / b),

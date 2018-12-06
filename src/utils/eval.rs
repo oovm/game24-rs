@@ -1,4 +1,7 @@
-use crate::trees::{Maybe32, V2O4, V3O4, V4O4};
+use crate::{
+    trees::{V2O4, V3O4, V4O4},
+    Maybe32,
+};
 
 pub fn solvable4(input: &[i32], target: i32) -> bool {
     match input.len() {
@@ -6,7 +9,7 @@ pub fn solvable4(input: &[i32], target: i32) -> bool {
         1 => input[0] == target,
         2 => {
             for f in V2O4.iter() {
-                if f(Maybe32::from(input[0]), Maybe32::from(input[1])) == target {
+                if f(Maybe32::from(input[0]), Maybe32::from(input[1])).unwrap() == target {
                     return true;
                 }
             }
@@ -14,7 +17,7 @@ pub fn solvable4(input: &[i32], target: i32) -> bool {
         }
         3 => {
             for f in V3O4.iter() {
-                if f(Maybe32::from(input[0]), Maybe32::from(input[1]), Maybe32::from(input[2])) == target {
+                if f(Maybe32::from(input[0]), Maybe32::from(input[1]), Maybe32::from(input[2])).unwrap() == target {
                     return true;
                 }
             }
@@ -23,6 +26,7 @@ pub fn solvable4(input: &[i32], target: i32) -> bool {
         4 => {
             for f in V4O4.iter() {
                 if f(Maybe32::from(input[0]), Maybe32::from(input[1]), Maybe32::from(input[2]), Maybe32::from(input[3]))
+                    .unwrap()
                     == target
                 {
                     return true;
