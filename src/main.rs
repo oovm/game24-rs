@@ -56,13 +56,12 @@ fn calc(op: [Operator; 3], numbers: [Maybe32; 4]) -> Vec<Factor> {
 }
 
 fn solutions(numbers: [Maybe32; 4], target: i32) -> Vec<Factor> {
-    use std::collections::hash_set::HashSet;
     let mut ret = Vec::new();
     for ops in OpIter(0) {
         for o in orders().iter() {
             let numbers = apply_order(numbers, o);
             let r = calc(ops, numbers);
-            ret.extend(r.into_iter().filter(|&Factor { value, ast: ref content }| value == 24))
+            ret.extend(r.into_iter().filter(|&Factor { value, ast: _ }| value == target))
         }
     }
     ret
@@ -73,12 +72,12 @@ fn main() {
     let solutions = solutions(numbers, 24);
     let len = solutions.len();
     if len == 0 {
-        println!("no solution for {:?}, {:?}, {:?}, {:?}", numbers[0], numbers[1], numbers[2], numbers[3]);
+        println!("no solution for {}, {}, {}, {}", numbers[0], numbers[1], numbers[2], numbers[3]);
         return;
     }
-    println!("solutions for {:?}, {:?}, {:?}, {:?}", numbers[0], numbers[1], numbers[2], numbers[3]);
+    println!("solutions for {}, {}, {}, {}", numbers[0], numbers[1], numbers[2], numbers[3]);
     for s in solutions {
-        println!("{:?}", s.ast)
+        println!("{}", s.ast)
     }
     println!("{} solutions found", len);
     return;

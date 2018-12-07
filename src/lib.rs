@@ -3,7 +3,7 @@
 pub(crate) mod trees;
 pub(crate) mod utils;
 
-pub use utils::solvable4;
+pub use utils::basic;
 
 #[derive(Copy, Clone, Debug)]
 pub enum Maybe32 {
@@ -13,7 +13,7 @@ pub enum Maybe32 {
 }
 
 #[derive(Clone, Debug)]
-pub enum AST<T: Clone> {
+pub enum AST<T> {
     Number(T),
     Plus(Box<AST<T>>, Box<AST<T>>),
     Minus(Box<AST<T>>, Box<AST<T>>),
